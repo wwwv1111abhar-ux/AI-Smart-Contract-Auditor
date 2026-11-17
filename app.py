@@ -13,12 +13,56 @@ GROQ_API_KEY = os.getenv("GROQ_API_KEY")
 st.title("🛡️ AI Smart Contract Auditor")
 st.markdown("Analyze your Solidity smart contracts for security vulnerabilities using AI.")
 
+# کد نمونه برای دکمه تست
+sample_code = """// SPDX-License-Identifier: MIT
+pragma solidity ^0.8.0;
+
+contract VulnerableFund {
+    mapping(address => uint256) public balances;
+    address public owner;
+    uint256 public totalFunds;
+
+    constructor() { owner = msg.sender; }
+
+    function deposit() public payable {
+        balances[msg.sender] += msg.value;
+        totalFunds += msg.value;
+    }
+
+    function withdrawAll() public {
+        uint256 balance = balances[msg.sender];
+        require(balance > 0, "No balance");
+        (bool success, ) = msg.sender.call{value: balance}("");
+        require(success, "Transfer failed");
+        balances[msg.sender] = 0;
+        totalFunds -= balance;
+    }
+
+    function playLottery() public payable {
+        require(msg.value == 1 ether, "Must send 1 ETH");
+        if (block.timestamp % 2 == 0) {
+            payable(msg.sender).transfer(2 ether);
+        }
+    }
+
+    function emergencyWithdraw() public {
+        (bool success, ) = msg.sender.call{value: address(this).balance}("");
+        require(success, "Emergency withdraw failed");
+    }
+}"""
+
 # دو ستون برای ورودی
 col1, col2 = st.columns([2, 1])
 
 with col1:
     st.subheader("📝 Paste your Solidity code here:")
-    solidity_code = st.text_area("", height=300, label_visibility="collapsed")
+    
+    # دکمه برای قرار دادن کد نمونه
+    if st.button("✨ Load Sample Code"):
+        st.session_state['code_input'] = sample_code
+        
+    # کادر متن که مقدارش از session_state خونده میشه
+    solidity_code = st.text_area("Solidity Code", value=st.session_state.get('code_input', ''), height=300)
 
 with col2:
     st.subheader("📂 Or upload a .sol file:")
@@ -29,6 +73,7 @@ with col2:
 
 st.divider()
 
+# دکمه اصلی برای تحلیل
 if st.button("🔍 Run Security Audit", use_container_width=True):
     if not solidity_code.strip():
         st.warning("Please provide some Solidity code first.")
