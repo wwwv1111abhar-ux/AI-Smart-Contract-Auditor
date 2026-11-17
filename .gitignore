@@ -1,0 +1,7 @@
+.env
+bot.py
+bot.log
+bot.pid
+tonconnect-manifest.json
+__pycache__/
+*.pyc
